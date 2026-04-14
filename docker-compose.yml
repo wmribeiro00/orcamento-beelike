@@ -3,6 +3,7 @@ services:
     build: .
     container_name: orcamento
     restart: unless-stopped
+    network_mode: host
     volumes:
       # Persiste os dados (produtos, config, orçamentos) fora do container
       - ./api/data:/app/api/data
@@ -11,4 +12,4 @@ services:
       - "traefik.http.routers.orcamento.rule=Host(`beelike.automatizeconsulting.com.br`)"
       - "traefik.http.routers.orcamento.entrypoints=websecure"
       - "traefik.http.routers.orcamento.tls.certresolver=letsencrypt"
-      - "traefik.http.services.orcamento.loadbalancer.server.port=3001"
+      - "traefik.http.services.orcamento.loadbalancer.server.url=http://127.0.0.1:3001"
