@@ -1,0 +1,15 @@
+# Dependências Node.js (instaladas no servidor via npm install)
+node_modules/
+
+# Dados persistidos (ficam apenas no VPS, não no repositório)
+api/data/
+
+# Arquivos de sistema Windows
+Thumbs.db
+desktop.ini
+
+# Arquivos de editor
+.vscode/
+
+# Arquivo legado (não é mais usado)
+google-apps-script.js

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Calculadora de orçamento — Gráfica Bee Like">
+    <title>Orçamento · Bee Like</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐝</text></svg>">
+</head>
+<body>
+    <div class="app-container">
+
+        <!-- ========== HEADER ========== -->
+        <header class="app-header">
+            <div class="app-logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L3 7v10l9 5 9-5V7l-9-5zm0 2.18L18.39 7.5 12 10.82 5.61 7.5 12 4.18zM5 9.06l6 3.32v6.44l-6-3.32V9.06zm8 9.76V12.38l6-3.32v6.44l-6 3.32z"/>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <span class="logo-brand">Bee Like</span>
+                    <span class="logo-sub">Orçamento Inteligente</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a href="config.html" class="btn btn-ghost" id="btn-config" title="Configurações">
+                    ⚙️ Configurações
+                </a>
+            </div>
+        </header>
+
+        <!-- ========== PRODUCT SELECTOR ========== -->
+        <div class="product-selector-bar no-print" id="product-selector">
+            <!-- Rendered by JS -->
+        </div>
+
+        <!-- ========== MAIN LAYOUT ========== -->
+        <main>
+            <div class="main-grid">
+
+                <!-- === LEFT: Form Panel === -->
+                <div class="form-panel animate-fade-in">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon" id="form-product-icon">📐</div>
+                            <h3 id="form-product-title">Novo Item</h3>
+                        </div>
+
+                        <!-- === SHEET PRODUCT FIELDS === -->
+                        <div id="sheet-fields">
+
+                            <!-- Tipo de Papel -->
+                            <div class="form-group" id="paper-type-wrapper">
+                                <label class="form-label">Tipo de Papel</label>
+                                <div id="paper-type-display">
+                                    <!-- Rendered by JS -->
+                                </div>
+                            </div>
+
+                            <!-- Formato -->
+                            <div class="form-group">
+                                <label class="form-label">Formato</label>
+                                <div class="card-radio-group cols-3" id="format-group">
+                                    <label class="card-radio">
+                                        <input type="radio" name="format" value="quadrado" checked>
+                                        <div class="card-radio-label">
+                                            <span class="card-radio-icon">⬜</span>
+                                            <span class="card-radio-name">Quadrado</span>
+                                        </div>
+                                    </label>
+                                    <label class="card-radio">
+                                        <input type="radio" name="format" value="retangular">
+                                        <div class="card-radio-label">
+                                            <span class="card-radio-icon">▬</span>
+                                            <span class="card-radio-name">Retangular</span>
+                                        </div>
+                                    </label>
+                                    <label class="card-radio">
+                                        <input type="radio" name="format" value="circular">
+                                        <div class="card-radio-label">
+                                            <span class="card-radio-icon">⭕</span>
+                                            <span class="card-radio-name">Circular</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Dimensões -->
+                            <div class="form-group" id="dimensions-group">
+                                <label class="form-label" id="dimensions-label">Lado (mm)</label>
+                                <div id="dimensions-inputs">
+                                    <!-- Rendered by JS -->
+                                </div>
+                                <p class="form-hint">Insira as medidas em milímetros</p>
+                            </div>
+
+                            <!-- Orientação do Adesivo (só retangular) -->
+                            <div class="form-group hidden" id="orientation-group">
+                                <label class="form-label">Orientação na Folha</label>
+                                <div class="sheet-toggle" id="orientation-toggle">
+                                    <button type="button" class="sheet-toggle-btn active" data-orientation="auto">🔄 Auto</button>
+                                    <button type="button" class="sheet-toggle-btn" data-orientation="horizontal">▬ Horizontal</button>
+                                    <button type="button" class="sheet-toggle-btn" data-orientation="vertical">▮ Vertical</button>
+                                </div>
+                                <p class="form-hint" id="orientation-hint">Automático seleciona a melhor posição</p>
+                            </div>
+
+                            <!-- Folha -->
+                            <div class="form-group" id="sheet-size-group">
+                                <label class="form-label">Tamanho da Folha</label>
+                                <div class="sheet-toggle" id="sheet-toggle">
+                                    <button type="button" class="sheet-toggle-btn active" data-sheet="A4">A4 <small>(190×280)</small></button>
+                                    <button type="button" class="sheet-toggle-btn" data-sheet="A3">A3 <small>(280×400)</small></button>
+                                </div>
+                            </div>
+
+                        </div><!-- end #sheet-fields -->
+
+                        <!-- === UNIT PRODUCT FIELDS === -->
+                        <div id="unit-fields" class="hidden">
+                            <div class="form-group">
+                                <label class="form-label" id="unit-cost-label">💰 Custo unitário (R$)</label>
+                                <input type="number" class="form-input" id="input-unit-cost"
+                                       placeholder="Ex: 8.50" min="0.01" step="0.01">
+                                <p class="form-hint" id="unit-cost-hint">Custo de produção por unidade</p>
+                            </div>
+                        </div>
+
+                        <!-- Quantidade (sempre visível) -->
+                        <div class="form-group">
+                            <label class="form-label" for="input-quantity">Quantidade</label>
+                            <input type="number" class="form-input" id="input-quantity"
+                                   placeholder="Ex: 100" min="1" max="100000" value="100">
+                        </div>
+
+                        <!-- Dados do Cliente -->
+                        <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 16px 0;">
+                        <div class="form-group">
+                            <label class="form-label">🏢 CNPJ do Cliente</label>
+                            <input type="text" class="form-input" id="client-cnpj" placeholder="00.000.000/0000-00">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">👤 Nome do Cliente</label>
+                            <input type="text" class="form-input" id="client-name" placeholder="Nome completo">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">📱 Telefone</label>
+                                <input type="tel" class="form-input" id="client-phone" placeholder="(00) 00000-0000">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">✉️ E-mail</label>
+                                <input type="email" class="form-input" id="client-email" placeholder="email@exemplo.com">
+                            </div>
+                        </div>
+
+                        <!-- Add Button -->
+                        <button class="btn btn-primary btn-full btn-lg" id="btn-add-item">
+                            ✚ Adicionar ao Orçamento
+                        </button>
+                    </div>
+                </div>
+
+                <!-- === RIGHT: Preview + Costs === -->
+                <div class="preview-panel animate-fade-in" style="animation-delay: 0.1s">
+                    <!-- Preview (sheet products only) -->
+                    <div class="card mb-lg" id="preview-card">
+                        <div class="card-header">
+                            <div class="card-icon">👁️</div>
+                            <h3>Visualização da Folha</h3>
+                        </div>
+                        <div class="preview-container">
+                            <canvas id="preview-canvas" class="preview-canvas" width="420" height="594"></canvas>
+                            <span class="preview-label" id="preview-sheet-label">A4</span>
+                        </div>
+                        <div class="utilization-bar">
+                            <span class="cost-label" style="font-size: var(--text-xs);">Aproveitamento</span>
+                            <div class="utilization-track">
+                                <div class="utilization-fill" id="utilization-fill" style="width: 0%"></div>
+                            </div>
+                            <span class="utilization-value" id="utilization-value">0%</span>
+                        </div>
+                    </div>
+
+                    <!-- Error -->
+                    <div class="error-message hidden" id="error-message">
+                        <span class="error-icon">⚠️</span>
+                        <span id="error-text"></span>
+                    </div>
+
+                    <!-- Cost Breakdown -->
+                    <div class="card" id="cost-card">
+                        <div class="card-header">
+                            <div class="card-icon">💰</div>
+                            <h3>Detalhamento de Custos</h3>
+                        </div>
+                        <div class="cost-breakdown">
+                            <div class="hidden" id="orientation-comparison" style="border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.12);">
+                                <div style="font-weight: 600; margin-bottom: 8px; font-size: 0.82em; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">📐 Comparação de orientação</div>
+                                <div id="orientation-h-row" style="display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; border-radius: 6px; margin-bottom: 4px; font-size: 0.82em; cursor: pointer; transition: background 0.2s;">
+                                    <span style="display: flex; align-items: center; gap: 6px;"><span style="opacity: 0.7;">▬</span> Horizontal</span>
+                                    <span id="orientation-h-count" style="font-weight: 600;">—</span>
+                                </div>
+                                <div id="orientation-v-row" style="display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; border-radius: 6px; font-size: 0.82em; cursor: pointer; transition: background 0.2s;">
+                                    <span style="display: flex; align-items: center; gap: 6px;"><span style="opacity: 0.7;">▮</span> Vertical</span>
+                                    <span id="orientation-v-count" style="font-weight: 600;">—</span>
+                                </div>
+                            </div>
+                            <!-- Sheet-only rows -->
+                            <div class="cost-row" id="row-per-sheet">
+                                <span class="cost-label">📋 Itens por folha</span>
+                                <span class="cost-value" id="cost-per-sheet">—</span>
+                            </div>
+                            <div class="cost-row" id="row-sheets">
+                                <span class="cost-label">📄 Folhas necessárias</span>
+                                <span class="cost-value" id="cost-sheets">—</span>
+                            </div>
+                            <div class="cost-row" id="row-material">
+                                <span class="cost-label">🏷️ Custo material</span>
+                                <span class="cost-value" id="cost-material">—</span>
+                            </div>
+                            <div class="cost-row" id="row-print">
+                                <span class="cost-label">🖨️ Custo impressão</span>
+                                <span class="cost-value" id="cost-print">—</span>
+                            </div>
+                            <!-- Always visible -->
+                            <div class="cost-row total">
+                                <span class="cost-label">Custo Total</span>
+                                <span class="cost-value" id="cost-total">—</span>
+                            </div>
+                            <div class="cost-row" id="row-unit">
+                                <span class="cost-label">💲 Custo unitário</span>
+                                <span class="cost-value" id="cost-unit">—</span>
+                            </div>
+                            <div class="cost-row sale">
+                                <span class="cost-label">🔥 Preço de Venda</span>
+                                <span class="cost-value" id="cost-sale">—</span>
+                            </div>
+                            <div class="cost-row">
+                                <span class="cost-label">🏷️ Preço por unidade</span>
+                                <span class="cost-value" id="cost-per-label">—</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== BUDGET SECTION ========== -->
+            <section class="budget-section animate-slide-up" style="animation-delay: 0.2s">
+                <div class="card">
+
+                    <!-- Cabeçalho exclusivo de impressão -->
+                    <div class="print-only print-header">
+                        <div class="print-header-company">
+                            <strong id="print-company-name">BeeLike Gráfica</strong>
+                            <span id="print-company-desc">Serviços Gráficos, Brindes e Souvenir</span>
+                            <span id="print-company-cnpj">CNPJ 59.410.990/0001-89</span>
+                        </div>
+                        <div class="print-header-date" id="print-date"></div>
+                    </div>
+
+                    <div class="budget-header">
+                        <div class="budget-header-left">
+                            <h3>📋 Orçamento</h3>
+                            <span class="budget-count" id="budget-count">0 itens</span>
+                        </div>
+                        <div class="budget-actions no-print">
+                            <button class="btn btn-ghost" id="btn-clear-budget" title="Limpar orçamento">🗑️ Limpar</button>
+                            <button class="btn btn-secondary" id="btn-print" title="Imprimir orçamento">🖨️ Imprimir</button>
+                            <button class="btn btn-primary" id="btn-save-sheets" title="Salvar no Google Sheets">💾 Salvar Orçamento</button>
+                        </div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div class="empty-state" id="budget-empty">
+                        <div class="empty-state-icon">📦</div>
+                        <div class="empty-state-title">Nenhum item no orçamento</div>
+                        <div class="empty-state-desc">Configure um produto acima e clique em "Adicionar ao Orçamento"</div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="budget-table-wrapper hidden" id="budget-table-wrapper">
+                        <table class="budget-table" id="budget-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Produto</th>
+                                    <th>Descrição</th>
+                                    <th>Qtd</th>
+                                    <th class="no-print">Custo</th>
+                                    <th>Venda</th>
+                                    <th class="col-actions no-print"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="budget-tbody">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Dados do cliente — exclusivo de impressão -->
+                    <div class="print-only print-client-section" id="print-client-section">
+                        <div class="print-client-title">Dados do Cliente</div>
+                        <div class="print-client-fields">
+                            <div class="print-client-field">
+                                <span class="print-client-field-label">CNPJ</span>
+                                <span class="print-client-field-value" id="print-client-cnpj">—</span>
+                            </div>
+                            <div class="print-client-field">
+                                <span class="print-client-field-label">Nome</span>
+                                <span class="print-client-field-value" id="print-client-name">—</span>
+                            </div>
+                            <div class="print-client-field">
+                                <span class="print-client-field-label">Telefone</span>
+                                <span class="print-client-field-value" id="print-client-phone">—</span>
+                            </div>
+                            <div class="print-client-field">
+                                <span class="print-client-field-label">E-mail</span>
+                                <span class="print-client-field-value" id="print-client-email">—</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Budget Footer / Totals -->
+                    <div class="budget-footer hidden" id="budget-footer">
+                        <div class="budget-totals">
+                            <div class="budget-total-item no-print">
+                                <span class="budget-total-label">Custo Total</span>
+                                <span class="budget-total-value cost" id="budget-total-cost">R$ 0,00</span>
+                            </div>
+                            <div class="budget-total-item">
+                                <span class="budget-total-label">Preço de Venda</span>
+                                <span class="budget-total-value sale" id="budget-total-sale">R$ 0,00</span>
+                            </div>
+                            <div class="budget-total-item hidden" id="budget-code-wrapper">
+                                <span class="budget-total-label">Código</span>
+                                <span class="budget-total-value" id="budget-code" style="font-family: monospace; font-size: 1.1rem;">—</span>
+                            </div>
+                        </div>
+                        <!-- markup por produto — campo oculto mantido para compatibilidade interna -->
+                        <input type="hidden" id="budget-markup" value="5">
+                    </div>
+
+                    <!-- Rodapé exclusivo de impressão -->
+                    <div class="print-only print-footer">
+                        Documento gerado por Bee Like Orçamentos
+                    </div>
+
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer spacing -->
+        <div style="height: 64px;"></div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <span class="toast-icon">✅</span>
+        <span class="toast-text" id="toast-text"></span>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/calculator.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

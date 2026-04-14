@@ -1,0 +1,5 @@
+# Bee Like Orçamento — Hostinger Configuration
+# Força HTTPS via X-Forwarded-Proto (Hostinger usa proxy reverso)
+RewriteEngine On
+RewriteCond %{HTTP:X-Forwarded-Proto} =http
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
