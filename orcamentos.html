@@ -622,50 +622,63 @@
         const data = getFiltered();
         if (data.length === 0) { showToast('Nenhum dado para exportar.', 'error'); return; }
 
+        // Expande: uma linha por item do orçamento
+        const header = ['Código','Data','Nome','CNPJ','Telefone','E-mail','Produto','Descrição','Quantidade','Custo (R$)','Venda (R$)','Status'];
+        const expandRows = data.flatMap(b =>
+            (b.items || []).map(item => [
+                b.budgetCode                          || '',
+                fmtDate(b.savedAt || b.date),
+                b.clientName                          || '',
+                b.clientCnpj                          || '',
+                b.clientPhone                         || '',
+                b.clientEmail                         || '',
+                item.productName                      || '',
+                item.description                      || '',
+                item.quantity                         || 0,
+                Number(item.totalCost  || 0).toFixed(2),
+                Number(item.salePrice  || 0).toFixed(2),
+                b.status                              || ''
+            ])
+        );
+
         if (format === 'csv' || format === 'excel') {
             const sep = format === 'excel' ? '\t' : ',';
-            const q   = v => format === 'excel' ? (v || '') : `"${(v || '').toString().replace(/"/g,'""')}"`;
-            const header = ['Código','Data','Cliente','CNPJ','Telefone','Email','Itens','Valor Custo','Valor Venda','Status'];
-            const rows = data.map(b => [
-                b.budgetCode, fmtDate(b.savedAt || b.date),
-                b.clientName, b.clientCnpj, b.clientPhone, b.clientEmail,
-                (b.items||[]).length,
-                totalCusto(b).toFixed(2), totalVenda(b).toFixed(2),
-                b.status
-            ].map(q).join(sep));
-            const content = [header.map(q).join(sep), ...rows].join('\n');
+            const q   = v => format === 'excel'
+                ? (v == null ? '' : String(v))
+                : `"${String(v == null ? '' : v).replace(/"/g,'""')}"`;
+            const content = [header.map(q).join(sep), ...expandRows.map(r => r.map(q).join(sep))].join('\n');
             const ext  = format === 'excel' ? 'xls' : 'csv';
             const mime = format === 'excel' ? 'application/vnd.ms-excel' : 'text/csv';
             download(content, `orcamentos.${ext}`, mime);
 
         } else if (format === 'txt') {
-            const lines = data.map(b =>
-                `#${b.budgetCode} | ${fmtDate(b.savedAt||b.date)} | ${b.clientName||'—'} | ${fmtBRL(totalVenda(b))} | ${b.status}`
-            );
+            const colW = [8,10,20,18,14,24,16,20,5,10,10,10];
+            const pad  = (s, w) => String(s || '').substring(0, w).padEnd(w);
+            const line = r => r.map((v, i) => pad(v, colW[i])).join(' | ');
+            const sep  = colW.map(w => '-'.repeat(w)).join('-+-');
+            const lines = [line(header), sep, ...expandRows.map(line)];
             download(lines.join('\n'), 'orcamentos.txt', 'text/plain');
 
         } else if (format === 'pdf') {
-            // Abre janela de impressão com tabela simplificada
-            const rows = data.map(b => `<tr>
-                <td>#${b.budgetCode||'—'}</td>
-                <td>${fmtDate(b.savedAt||b.date)}</td>
-                <td>${b.clientName||'—'}</td>
-                <td>${(b.items||[]).length}</td>
-                <td>R$ ${totalVenda(b).toFixed(2)}</td>
-                <td>${b.status}</td>
-            </tr>`).join('');
-            const win = window.open('', '_blank');
+            const rows = expandRows.map(r => `<tr>${r.map(v => `<td>${v}</td>`).join('')}</tr>`).join('');
+            const ths  = header.map(h => `<th>${h}</th>`).join('');
+            const win  = window.open('', '_blank');
             win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
                 <title>Orçamentos Bee Like</title>
-                <style>body{font-family:sans-serif;font-size:12px;padding:20px}
-                h2{margin-bottom:12px}
+                <style>
+                body{font-family:sans-serif;font-size:11px;padding:20px}
+                h2{margin-bottom:12px;font-size:14px}
                 table{width:100%;border-collapse:collapse}
-                th,td{border:1px solid #ccc;padding:6px 8px;text-align:left}
-                th{background:#f5f5f5}</style>
-                </head><body><h2>Orçamentos Bee Like — ${new Date().toLocaleDateString('pt-BR')}</h2>
-                <table><thead><tr><th>Código</th><th>Data</th><th>Cliente</th><th>Itens</th><th>Valor</th><th>Status</th></tr></thead>
-                <tbody>${rows}</tbody></table>
-                <script>window.onload=()=>{window.print();window.close()}<\/script></body></html>`);
+                th,td{border:1px solid #ccc;padding:4px 6px;text-align:left;white-space:nowrap}
+                th{background:#f5f5f5;font-weight:600}
+                tr:nth-child(even){background:#fafafa}
+                @media print{@page{size:landscape}}
+                </style>
+                </head><body>
+                <h2>Orçamentos Bee Like — ${new Date().toLocaleDateString('pt-BR')}</h2>
+                <table><thead><tr>${ths}</tr></thead><tbody>${rows}</tbody></table>
+                <script>window.onload=()=>{window.print();window.close()}<\/script>
+                </body></html>`);
             win.document.close();
         }
     };
