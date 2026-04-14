@@ -301,6 +301,7 @@
 
         if (type === 'unit') {
             config.products[id] = {
+                id,
                 name,
                 type: 'unit',
                 unitCost:    parseFloat($('#new-product-unit-cost').value) || 0,
@@ -309,6 +310,7 @@
         } else {
             // Sheet product
             config.products[id] = {
+                id,
                 name,
                 type: 'sheet',
                 paperType:         $('#new-paper-type').value.trim(),
@@ -396,12 +398,13 @@
                 .then(() => showToast('Configurações e produtos salvos no servidor!', 'success'))
                 .catch(() => showToast('⚠️ Erro ao conectar com o servidor. Dados salvos localmente.', 'error'));
 
-                // 2. Sincroniza cada produto
-                Object.values(config.products || {}).forEach(product => {
+                // 2. Sincroniza cada produto (garante que id está presente)
+                Object.entries(config.products || {}).forEach(([pid, product]) => {
+                    const productWithId = { ...product, id: product.id || pid };
                     fetch(url + '/api/products', {
                         method:  'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body:    JSON.stringify({ product })
+                        body:    JSON.stringify({ product: productWithId })
                     }).catch(() => {});
                 });
             } else {
