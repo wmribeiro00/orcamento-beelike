@@ -14,9 +14,6 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// Serve o frontend estático a partir da pasta pai (../index.html, ../config.html, etc.)
-app.use(express.static(path.join(__dirname, '..')));
-
 /* ---------- Caminhos dos arquivos de dados ---------- */
 const DATA_DIR = path.join(__dirname, 'data');
 const FILES = {
@@ -85,6 +82,9 @@ app.post('/api/budgets', (req, res) => {
   writeJson(FILES.budgets, budgets);
   res.json({ status: 'ok' });
 });
+
+// Serve o frontend estático APÓS as rotas da API (evita conflito com a pasta api/data/)
+app.use(express.static(path.join(__dirname, '..')));
 
 /* ---------- Start ---------- */
 app.listen(PORT, () => {
