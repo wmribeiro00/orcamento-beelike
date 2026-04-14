@@ -51,7 +51,7 @@ const Storage = (function () {
             description: '',
             cnpj: ''
         },
-        apiUrl: '',
+        apiUrl: 'https://beelike.automatizeconsulting.com.br',
         activeProductId: '',
         products: {}
     };
