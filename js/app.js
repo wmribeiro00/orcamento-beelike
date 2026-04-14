@@ -125,6 +125,13 @@
             renderProductSelector();
             switchProduct(activeProductId, false);
         });
+
+        // Pré-preenche campos do cliente se vieram via URL (ex: "Novo p/ Cliente")
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('clientName'))  els.clientName.value  = params.get('clientName');
+        if (params.get('clientCnpj'))  els.clientCnpj.value  = params.get('clientCnpj');
+        if (params.get('clientPhone')) els.clientPhone.value = params.get('clientPhone');
+        if (params.get('clientEmail')) els.clientEmail.value = params.get('clientEmail');
     }
 
     /* === Sync produtos da API === */
@@ -155,7 +162,13 @@
     /* === Product Selector === */
     function renderProductSelector() {
         const products = config.products || {};
-        const ids = Object.keys(products);
+        // Ordena alfabeticamente por label (nome + tipo de papel)
+        const ids = Object.keys(products).sort((a, b) => {
+            const pa = products[a], pb = products[b];
+            const la = pa.type === 'sheet' && pa.paperType ? `${pa.name} — ${pa.paperType}` : pa.name;
+            const lb = pb.type === 'sheet' && pb.paperType ? `${pb.name} — ${pb.paperType}` : pb.name;
+            return la.localeCompare(lb, 'pt-BR', { sensitivity: 'base' });
+        });
         els.productSelector.style.display = '';
         els.productSelector.innerHTML = `
             <label class="product-select-label no-print">Produto:</label>
@@ -163,7 +176,8 @@
                 ${ids.map(id => {
                     const p = products[id];
                     const icon = p.type === 'unit' ? '📦' : '📋';
-                    return `<option value="${id}" ${id === activeProductId ? 'selected' : ''}>${icon} ${p.name}</option>`;
+                    const label = p.type === 'sheet' && p.paperType ? `${p.name} — ${p.paperType}` : p.name;
+                    return `<option value="${id}" ${id === activeProductId ? 'selected' : ''}>${icon} ${label}</option>`;
                 }).join('')}
             </select>`;
 

@@ -7,74 +7,108 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐝</text></svg>">
     <style>
-        /* ── Layout ── */
-        .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
-        .page-title  { font-size:var(--text-xl); font-weight:700; color:var(--text-primary); }
-
         /* ── KPIs ── */
         .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:24px; }
-        .kpi-card { background:var(--surface); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:16px; }
+        .kpi-card { background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:16px; }
         .kpi-label { font-size:var(--text-xs); color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
-        .kpi-value { font-size:var(--text-2xl,1.5rem); font-weight:700; color:var(--text-primary); }
+        .kpi-value { font-size:1.5rem; font-weight:700; color:var(--text-primary); }
         .kpi-sub   { font-size:var(--text-xs); color:var(--text-muted); margin-top:2px; }
         .kpi-card.accent-green .kpi-value { color:#22c55e; }
         .kpi-card.accent-amber .kpi-value { color:#f59e0b; }
         .kpi-card.accent-red   .kpi-value { color:#ef4444; }
 
         /* ── Filters ── */
-        .filters { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:flex-end; }
-        .filters .form-group { margin:0; min-width:160px; }
+        .filters { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
+        .filters .form-group { margin:0; min-width:140px; }
         .filters .form-group label { font-size:var(--text-xs); color:var(--text-muted); display:block; margin-bottom:4px; }
         .filter-search { flex:1; min-width:200px; }
 
         /* ── Table ── */
         .budget-table { width:100%; border-collapse:collapse; font-size:var(--text-sm); }
-        .budget-table th { text-align:left; padding:10px 12px; color:var(--text-muted); font-weight:600; font-size:var(--text-xs); text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid var(--border-subtle); white-space:nowrap; }
+        .budget-table th {
+            text-align:left; padding:10px 12px;
+            color:var(--text-muted); font-weight:600; font-size:var(--text-xs);
+            text-transform:uppercase; letter-spacing:.05em;
+            border-bottom:1px solid var(--border-subtle);
+            white-space:nowrap; cursor:pointer; user-select:none;
+        }
+        .budget-table th:hover { color:var(--text-primary); }
+        .budget-table th .sort-arrow { margin-left:4px; opacity:.4; font-size:10px; }
+        .budget-table th.sort-asc  .sort-arrow,
+        .budget-table th.sort-desc .sort-arrow { opacity:1; color:var(--accent); }
         .budget-table td { padding:12px; border-bottom:1px solid var(--border-subtle); vertical-align:middle; }
         .budget-table tr:last-child td { border-bottom:none; }
-        .budget-table tbody tr:hover { background:var(--surface-hover,rgba(255,255,255,.03)); }
-        .budget-table .col-code  { font-family:monospace; font-size:var(--text-xs); color:var(--text-muted); }
-        .budget-table .col-value { font-weight:600; color:var(--text-primary); }
-        .budget-table .col-actions { display:flex; gap:6px; }
+        .budget-table tbody tr:hover { background:rgba(255,255,255,.03); }
+        .col-code    { font-family:monospace; font-size:var(--text-xs); color:var(--text-muted); }
+        .col-value   { font-weight:600; color:var(--text-primary); }
+        .col-actions { display:flex; gap:4px; }
+
+        /* ── Status select ── */
+        .status-select {
+            font-size:11px; font-weight:600;
+            border:1px solid var(--border-subtle);
+            border-radius:var(--radius-full);
+            padding:3px 8px;
+            background:#1a1a24;
+            color:var(--text-primary);
+            cursor:pointer;
+            appearance:none; -webkit-appearance:none;
+        }
+        .status-select option { background:#1a1a24; color:var(--text-primary); }
 
         /* ── Status badge ── */
-        .status-badge { display:inline-block; padding:2px 10px; border-radius:999px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+        .status-badge { display:inline-block; padding:2px 10px; border-radius:999px; font-size:11px; font-weight:600; }
         .status-pendente { background:rgba(245,158,11,.15); color:#f59e0b; }
         .status-aceito   { background:rgba(34,197,94,.15);  color:#22c55e; }
         .status-recusado { background:rgba(239,68,68,.15);  color:#ef4444; }
 
         /* ── Modal ── */
-        .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1000; display:flex; align-items:center; justify-content:center; padding:16px; }
+        .modal-overlay {
+            position:fixed; inset:0;
+            background:rgba(0,0,0,.75);
+            backdrop-filter:blur(4px);
+            -webkit-backdrop-filter:blur(4px);
+            z-index:1000; display:flex;
+            align-items:center; justify-content:center; padding:16px;
+        }
         .modal-overlay.hidden { display:none; }
-        .modal { background:var(--surface); border:1px solid var(--border-subtle); border-radius:var(--radius-xl,16px); width:100%; max-width:720px; max-height:90vh; overflow-y:auto; }
+        .modal {
+            background:#16161f;
+            border:1px solid var(--border-medium);
+            border-radius:var(--radius-xl);
+            width:100%; max-width:740px;
+            max-height:90vh; overflow-y:auto;
+            box-shadow:0 24px 64px rgba(0,0,0,.7);
+        }
         .modal-header { display:flex; align-items:center; justify-content:space-between; padding:20px 24px 16px; border-bottom:1px solid var(--border-subtle); }
-        .modal-header h3 { font-size:var(--text-lg); font-weight:700; margin:0; }
+        .modal-header h3 { font-size:var(--text-lg); font-weight:700; margin:0; color:var(--text-primary); }
         .modal-body   { padding:24px; }
-        .modal-footer { padding:16px 24px; border-top:1px solid var(--border-subtle); display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; }
+        .modal-footer { padding:16px 24px; border-top:1px solid var(--border-subtle); display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; }
         .btn-close { background:none; border:none; font-size:20px; cursor:pointer; color:var(--text-muted); line-height:1; padding:4px; }
 
-        /* ── Print budget detail ── */
-        .budget-detail-header { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
-        .budget-detail-section { margin-bottom:16px; }
-        .budget-detail-section h4 { font-size:var(--text-xs); text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); margin-bottom:8px; }
+        /* ── Detail table ── */
+        .budget-detail-section { margin-bottom:20px; }
+        .budget-detail-section h4 { font-size:var(--text-xs); text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); margin-bottom:10px; }
         .detail-table { width:100%; border-collapse:collapse; font-size:var(--text-sm); }
-        .detail-table th { text-align:left; padding:8px 10px; background:var(--surface-alt,rgba(255,255,255,.04)); font-size:var(--text-xs); color:var(--text-muted); }
-        .detail-table td { padding:8px 10px; border-top:1px solid var(--border-subtle); }
-        .detail-table .text-right { text-align:right; }
-        .detail-total { font-weight:700; color:var(--accent,#f5a623); }
+        .detail-table th { text-align:left; padding:8px 10px; background:rgba(255,255,255,.04); font-size:var(--text-xs); color:var(--text-muted); }
+        .detail-table td { padding:8px 10px; border-top:1px solid var(--border-subtle); color:var(--text-primary); }
+        .text-right { text-align:right; }
+        .detail-total { font-weight:700; color:var(--accent); }
 
         /* ── Empty state ── */
         .empty-state { text-align:center; padding:60px 20px; color:var(--text-muted); }
         .empty-state .empty-icon { font-size:48px; margin-bottom:12px; }
 
-        /* ── Status select inline ── */
-        .status-select { font-size:12px; border:1px solid var(--border-subtle); border-radius:6px; padding:2px 6px; background:var(--surface); color:var(--text-primary); cursor:pointer; }
+        /* ── Export bar ── */
+        .export-bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+        .export-bar span { font-size:var(--text-xs); color:var(--text-muted); }
 
         @media print {
             .no-print { display:none !important; }
-            .modal-overlay { position:static; background:none; padding:0; }
-            .modal { border:none; max-height:none; }
+            .modal-overlay { position:static; background:none; backdrop-filter:none; padding:0; display:block; }
+            .modal { border:none; max-height:none; box-shadow:none; background:#fff; color:#000; }
             .modal-header, .modal-footer { display:none; }
+            .detail-table th, .detail-table td { color:#000; border-color:#ccc; }
         }
     </style>
 </head>
@@ -103,7 +137,7 @@
     <main>
 
         <!-- KPIs -->
-        <div class="kpi-grid no-print" id="kpi-grid">
+        <div class="kpi-grid no-print">
             <div class="kpi-card"><div class="kpi-label">Total de Orçamentos</div><div class="kpi-value" id="kpi-total">—</div></div>
             <div class="kpi-card accent-green"><div class="kpi-label">Aceitos</div><div class="kpi-value" id="kpi-aceitos">—</div><div class="kpi-sub" id="kpi-conv">conversão —</div></div>
             <div class="kpi-card accent-amber"><div class="kpi-label">Pendentes</div><div class="kpi-value" id="kpi-pendentes">—</div></div>
@@ -112,9 +146,9 @@
             <div class="kpi-card accent-green"><div class="kpi-label">Valor Aceitos</div><div class="kpi-value" id="kpi-valor-aceito">—</div></div>
         </div>
 
-        <!-- Filtros -->
-        <div class="card animate-fade-in no-print" style="margin-bottom:16px;">
-            <div class="filters">
+        <!-- Filtros + Export -->
+        <div class="card animate-fade-in no-print mb-lg">
+            <div class="filters" style="margin-bottom:12px;">
                 <div class="form-group filter-search">
                     <label>Buscar</label>
                     <input type="text" class="form-input" id="filter-search" placeholder="Código, cliente, e-mail...">
@@ -123,9 +157,9 @@
                     <label>Status</label>
                     <select class="form-input" id="filter-status">
                         <option value="">Todos</option>
-                        <option value="pendente">Pendente</option>
-                        <option value="aceito">Aceito</option>
-                        <option value="recusado">Recusado</option>
+                        <option value="pendente">⏳ Pendente</option>
+                        <option value="aceito">✅ Aceito</option>
+                        <option value="recusado">❌ Recusado</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -139,6 +173,13 @@
                 <div class="form-group" style="align-self:flex-end;">
                     <button class="btn btn-ghost" id="btn-clear-filters">✕ Limpar</button>
                 </div>
+            </div>
+            <div class="export-bar">
+                <span>Exportar:</span>
+                <button class="btn btn-ghost" style="font-size:12px;padding:4px 10px;" onclick="exportData('csv')">CSV</button>
+                <button class="btn btn-ghost" style="font-size:12px;padding:4px 10px;" onclick="exportData('excel')">Excel</button>
+                <button class="btn btn-ghost" style="font-size:12px;padding:4px 10px;" onclick="exportData('txt')">TXT</button>
+                <button class="btn btn-ghost" style="font-size:12px;padding:4px 10px;" onclick="exportData('pdf')">PDF</button>
             </div>
         </div>
 
@@ -166,9 +207,10 @@
         <div class="modal-body" id="modal-body"></div>
         <div class="modal-footer">
             <button class="btn btn-ghost" id="modal-close2">Fechar</button>
-            <button class="btn btn-ghost no-print" id="btn-modal-print">🖨 Imprimir</button>
-            <button class="btn btn-secondary no-print" id="btn-modal-edit">✏️ Editar</button>
-            <button class="btn btn-primary no-print" id="btn-modal-save" style="display:none;">💾 Salvar Alterações</button>
+            <button class="btn btn-ghost" id="btn-modal-print">🖨 Imprimir</button>
+            <button class="btn btn-secondary" id="btn-modal-new-client" title="Novo orçamento com este cliente">👤 Novo p/ Cliente</button>
+            <button class="btn btn-secondary" id="btn-modal-edit">✏️ Editar</button>
+            <button class="btn btn-primary" id="btn-modal-save" style="display:none;">💾 Salvar Alterações</button>
         </div>
     </div>
 </div>
@@ -184,21 +226,20 @@
 (function () {
     'use strict';
 
-    const config  = Storage.getConfig();
-    const apiUrl  = config.apiUrl || '';
+    const config = Storage.getConfig();
+    const apiUrl = config.apiUrl || '';
 
-    let allBudgets   = [];
-    let editingId    = null;
-    let isEditMode   = false;
+    let allBudgets = [];
+    let editingId  = null;
+    let sortCol    = 'savedAt';
+    let sortDir    = 'desc'; // 'asc' | 'desc'
 
     /* ── Formatação ── */
-    const fmtBRL = v => 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmtBRL = v => 'R$\u00a0' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const fmtDate = s => {
         if (!s) return '—';
-        // tenta ISO
         const d = new Date(s);
-        if (!isNaN(d)) return d.toLocaleDateString('pt-BR');
-        return s.split(',')[0] || s;
+        return isNaN(d) ? (s.split(',')[0] || s) : d.toLocaleDateString('pt-BR');
     };
 
     /* ── Toast ── */
@@ -212,7 +253,11 @@
         setTimeout(() => t.classList.remove('show'), 3000);
     }
 
-    /* ── Carregar orçamentos ── */
+    /* ── Totais ── */
+    function totalVenda(b) { return (b.items || []).reduce((s, i) => s + (i.salePrice || 0), 0); }
+    function totalCusto(b) { return (b.items || []).reduce((s, i) => s + (i.totalCost || 0), 0); }
+
+    /* ── Carregar ── */
     async function loadBudgets() {
         if (!apiUrl) {
             document.getElementById('budget-list-wrapper').innerHTML =
@@ -220,19 +265,18 @@
             return;
         }
         try {
-            const r = await fetch(apiUrl + '/api/budgets');
+            const r    = await fetch(apiUrl + '/api/budgets');
             const data = await r.json();
-            // Garante que orçamentos antigos (sem id/status) ficam compatíveis
             allBudgets = (data.budgets || []).map((b, i) => ({
                 ...b,
                 id:     b.id     || ('b_legacy_' + i),
                 status: b.status || 'pendente'
-            })).reverse(); // mais recentes primeiro
+            }));
             renderKPIs(allBudgets);
-            renderTable(allBudgets);
-        } catch (e) {
+            renderTable();
+        } catch {
             document.getElementById('budget-list-wrapper').innerHTML =
-                '<div class="empty-state"><div class="empty-icon">❌</div><p>Erro ao carregar orçamentos. Verifique a conexão com o servidor.</p></div>';
+                '<div class="empty-state"><div class="empty-icon">❌</div><p>Erro ao carregar. Verifique a conexão com o servidor.</p></div>';
         }
     }
 
@@ -246,30 +290,23 @@
         const valorAceito = aceitos.reduce((s, b) => s + totalVenda(b), 0);
         const conv = total > 0 ? Math.round(aceitos.length / total * 100) : 0;
 
-        document.getElementById('kpi-total').textContent      = total;
-        document.getElementById('kpi-aceitos').textContent    = aceitos.length;
-        document.getElementById('kpi-conv').textContent       = `conversão ${conv}%`;
-        document.getElementById('kpi-pendentes').textContent  = pendentes;
-        document.getElementById('kpi-recusados').textContent  = recusados;
-        document.getElementById('kpi-valor').textContent      = fmtBRL(valorTotal);
+        document.getElementById('kpi-total').textContent        = total;
+        document.getElementById('kpi-aceitos').textContent      = aceitos.length;
+        document.getElementById('kpi-conv').textContent         = `conversão ${conv}%`;
+        document.getElementById('kpi-pendentes').textContent    = pendentes;
+        document.getElementById('kpi-recusados').textContent    = recusados;
+        document.getElementById('kpi-valor').textContent        = fmtBRL(valorTotal);
         document.getElementById('kpi-valor-aceito').textContent = fmtBRL(valorAceito);
     }
 
-    function totalVenda(b) {
-        return (b.items || []).reduce((s, i) => s + (i.salePrice || 0), 0);
-    }
-    function totalCusto(b) {
-        return (b.items || []).reduce((s, i) => s + (i.totalCost || 0), 0);
-    }
-
-    /* ── Tabela ── */
+    /* ── Filtro + ordenação ── */
     function getFiltered() {
         const search = document.getElementById('filter-search').value.trim().toLowerCase();
         const status = document.getElementById('filter-status').value;
         const from   = document.getElementById('filter-from').value;
         const to     = document.getElementById('filter-to').value;
 
-        return allBudgets.filter(b => {
+        let list = allBudgets.filter(b => {
             if (status && b.status !== status) return false;
             if (from || to) {
                 const d = new Date(b.savedAt || b.date);
@@ -282,10 +319,48 @@
             }
             return true;
         });
+
+        // Ordenação
+        list = list.slice().sort((a, b) => {
+            let va, vb;
+            if (sortCol === 'savedAt') {
+                va = new Date(a.savedAt || a.date).getTime();
+                vb = new Date(b.savedAt || b.date).getTime();
+            } else if (sortCol === 'valor') {
+                va = totalVenda(a); vb = totalVenda(b);
+            } else if (sortCol === 'clientName') {
+                va = (a.clientName || '').toLowerCase();
+                vb = (b.clientName || '').toLowerCase();
+            } else if (sortCol === 'budgetCode') {
+                va = a.budgetCode || ''; vb = b.budgetCode || '';
+            } else if (sortCol === 'status') {
+                va = a.status || ''; vb = b.status || '';
+            } else {
+                va = a[sortCol] || ''; vb = b[sortCol] || '';
+            }
+            if (va < vb) return sortDir === 'asc' ? -1 : 1;
+            if (va > vb) return sortDir === 'asc' ?  1 : -1;
+            return 0;
+        });
+
+        return list;
     }
 
-    function renderTable(budgets) {
-        const filtered = budgets ? getFiltered() : getFiltered();
+    function setSort(col) {
+        if (sortCol === col) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+        else { sortCol = col; sortDir = col === 'savedAt' ? 'desc' : 'asc'; }
+        renderTable();
+    }
+    window.setSort = setSort;
+
+    function sortArrow(col) {
+        if (sortCol !== col) return '<span class="sort-arrow">⇅</span>';
+        return `<span class="sort-arrow">${sortDir === 'asc' ? '↑' : '↓'}</span>`;
+    }
+
+    /* ── Tabela ── */
+    function renderTable() {
+        const filtered = getFiltered();
         const wrapper  = document.getElementById('budget-list-wrapper');
 
         if (filtered.length === 0) {
@@ -293,33 +368,33 @@
             return;
         }
 
+        const thClass = col => `${sortCol === col ? ('sort-' + sortDir) : ''}`;
+
         wrapper.innerHTML = `
         <div style="overflow-x:auto;">
         <table class="budget-table">
-            <thead>
-                <tr>
-                    <th>Código</th>
-                    <th>Data</th>
-                    <th>Cliente</th>
-                    <th>Itens</th>
-                    <th>Valor Venda</th>
-                    <th>Status</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
+            <thead><tr>
+                <th class="${thClass('budgetCode')}" onclick="setSort('budgetCode')">Código ${sortArrow('budgetCode')}</th>
+                <th class="${thClass('savedAt')}"    onclick="setSort('savedAt')">Data ${sortArrow('savedAt')}</th>
+                <th class="${thClass('clientName')}" onclick="setSort('clientName')">Cliente ${sortArrow('clientName')}</th>
+                <th>Itens</th>
+                <th class="${thClass('valor')}"  onclick="setSort('valor')">Valor Venda ${sortArrow('valor')}</th>
+                <th class="${thClass('status')}" onclick="setSort('status')">Status ${sortArrow('status')}</th>
+                <th>Ações</th>
+            </tr></thead>
             <tbody>
-                ${filtered.map(b => `
+            ${filtered.map(b => `
                 <tr>
                     <td class="col-code">#${b.budgetCode || '—'}</td>
                     <td>${fmtDate(b.savedAt || b.date)}</td>
                     <td>
-                        <div style="font-weight:600;">${b.clientName || '—'}</div>
+                        <div style="font-weight:600;color:var(--text-primary)">${b.clientName || '—'}</div>
                         ${b.clientEmail ? `<div style="font-size:11px;color:var(--text-muted)">${b.clientEmail}</div>` : ''}
                     </td>
-                    <td>${(b.items || []).length} item(s)</td>
+                    <td style="color:var(--text-secondary)">${(b.items || []).length} item(s)</td>
                     <td class="col-value">${fmtBRL(totalVenda(b))}</td>
                     <td>
-                        <select class="status-select" data-id="${b.id}" onchange="updateStatus('${b.id}', this.value)">
+                        <select class="status-select" onchange="updateStatus('${b.id}', this.value)">
                             <option value="pendente" ${b.status==='pendente'?'selected':''}>⏳ Pendente</option>
                             <option value="aceito"   ${b.status==='aceito'  ?'selected':''}>✅ Aceito</option>
                             <option value="recusado" ${b.status==='recusado'?'selected':''}>❌ Recusado</option>
@@ -334,26 +409,22 @@
                     </td>
                 </tr>`).join('')}
             </tbody>
-        </table>
-        </div>`;
+        </table></div>`;
     }
 
-    /* ── Atualizar status inline ── */
+    /* ── Status inline ── */
     window.updateStatus = async function(id, status) {
         const b = allBudgets.find(x => x.id === id);
         if (!b) return;
         b.status = status;
         try {
             await fetch(apiUrl + '/api/budgets/' + encodeURIComponent(id), {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'PUT', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status })
             });
             renderKPIs(allBudgets);
             showToast('Status atualizado!');
-        } catch {
-            showToast('Erro ao atualizar status.', 'error');
-        }
+        } catch { showToast('Erro ao atualizar status.', 'error'); }
     };
 
     /* ── Excluir ── */
@@ -367,89 +438,86 @@
             renderKPIs(allBudgets);
             renderTable();
             showToast('Orçamento excluído.');
-        } catch {
-            showToast('Erro ao excluir.', 'error');
-        }
+        } catch { showToast('Erro ao excluir.', 'error'); }
     };
 
     /* ── Modal ── */
     window.openModal = function(id, editMode) {
         const b = allBudgets.find(x => x.id === id);
         if (!b) return;
-        editingId   = id;
-        isEditMode  = editMode;
+        editingId = id;
 
-        document.getElementById('modal-title').textContent =
-            `Orçamento #${b.budgetCode || '—'} ${editMode ? '— Edição' : ''}`;
-        document.getElementById('modal-body').innerHTML = renderModalBody(b, editMode);
-        document.getElementById('btn-modal-edit').style.display  = editMode ? 'none' : '';
-        document.getElementById('btn-modal-save').style.display  = editMode ? ''     : 'none';
+        document.getElementById('modal-title').textContent = `Orçamento #${b.budgetCode || '—'}${editMode ? ' — Edição' : ''}`;
+        document.getElementById('modal-body').innerHTML    = renderModalBody(b, editMode);
+        document.getElementById('btn-modal-edit').style.display = editMode ? 'none' : '';
+        document.getElementById('btn-modal-save').style.display = editMode ? '' : 'none';
         document.getElementById('modal-overlay').classList.remove('hidden');
     };
 
     function renderModalBody(b, editMode) {
-        const statusLabel = { pendente: '⏳ Pendente', aceito: '✅ Aceito', recusado: '❌ Recusado' };
-        const items = b.items || [];
-        const venda = totalVenda(b);
-        const custo = totalCusto(b);
+        const items  = b.items || [];
+        const venda  = totalVenda(b);
+        const custo  = totalCusto(b);
 
-        const clientFields = editMode ? `
+        const clientSection = editMode ? `
             <div class="form-row">
-                <div class="form-group"><label class="form-label">Nome</label>
-                    <input class="form-input" id="edit-client-name"  value="${b.clientName  || ''}"></div>
-                <div class="form-group"><label class="form-label">CNPJ</label>
-                    <input class="form-input" id="edit-client-cnpj"  value="${b.clientCnpj  || ''}"></div>
+                <div class="form-group">
+                    <label class="form-label">Nome</label>
+                    <input class="form-input" id="edit-client-name"  value="${esc(b.clientName)}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">CNPJ</label>
+                    <input class="form-input" id="edit-client-cnpj"  value="${esc(b.clientCnpj)}">
+                </div>
             </div>
             <div class="form-row">
-                <div class="form-group"><label class="form-label">Telefone</label>
-                    <input class="form-input" id="edit-client-phone" value="${b.clientPhone || ''}"></div>
-                <div class="form-group"><label class="form-label">E-mail</label>
-                    <input class="form-input" id="edit-client-email" value="${b.clientEmail || ''}"></div>
-            </div>` : `
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:var(--text-sm);">
-                <div><span style="color:var(--text-muted)">Cliente:</span> <strong>${b.clientName || '—'}</strong></div>
-                <div><span style="color:var(--text-muted)">CNPJ:</span> ${b.clientCnpj || '—'}</div>
-                <div><span style="color:var(--text-muted)">Telefone:</span> ${b.clientPhone || '—'}</div>
-                <div><span style="color:var(--text-muted)">E-mail:</span> ${b.clientEmail || '—'}</div>
-            </div>`;
-
-        const statusField = editMode ? `
-            <div class="form-group" style="margin-top:12px;">
+                <div class="form-group">
+                    <label class="form-label">Telefone</label>
+                    <input class="form-input" id="edit-client-phone" value="${esc(b.clientPhone)}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">E-mail</label>
+                    <input class="form-input" id="edit-client-email" value="${esc(b.clientEmail)}">
+                </div>
+            </div>
+            <div class="form-group" style="margin-top:8px;">
                 <label class="form-label">Status</label>
                 <select class="form-input" id="edit-status">
                     <option value="pendente" ${b.status==='pendente'?'selected':''}>⏳ Pendente</option>
                     <option value="aceito"   ${b.status==='aceito'  ?'selected':''}>✅ Aceito</option>
                     <option value="recusado" ${b.status==='recusado'?'selected':''}>❌ Recusado</option>
                 </select>
-            </div>` : `<div style="margin-top:8px;font-size:var(--text-sm);">
-                <span style="color:var(--text-muted)">Status:</span>
-                <span class="status-badge status-${b.status}">${statusLabel[b.status] || b.status}</span>
+            </div>` : `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:var(--text-sm);color:var(--text-secondary);">
+                <div><span style="color:var(--text-muted)">Cliente:</span> <strong style="color:var(--text-primary)">${esc(b.clientName) || '—'}</strong></div>
+                <div><span style="color:var(--text-muted)">CNPJ:</span> ${esc(b.clientCnpj) || '—'}</div>
+                <div><span style="color:var(--text-muted)">Telefone:</span> ${esc(b.clientPhone) || '—'}</div>
+                <div><span style="color:var(--text-muted)">E-mail:</span> ${esc(b.clientEmail) || '—'}</div>
+            </div>
+            <div style="margin-top:10px;">
+                <span class="status-badge status-${b.status}">${{pendente:'⏳ Pendente',aceito:'✅ Aceito',recusado:'❌ Recusado'}[b.status] || b.status}</span>
             </div>`;
 
-        const itemsRows = items.map((item, i) => {
-            if (editMode) {
-                return `<tr>
-                    <td>${item.productName}</td>
-                    <td>${item.description || '—'}</td>
-                    <td><input type="number" class="form-input" style="width:80px;padding:4px 8px;" data-item="${i}" data-field="quantity" value="${item.quantity}" min="1" onchange="updateItemField(${i},'quantity',+this.value)"></td>
-                    <td class="text-right">${fmtBRL(item.totalCost)}</td>
-                    <td class="text-right"><input type="number" class="form-input" style="width:100px;padding:4px 8px;" data-item="${i}" data-field="salePrice" value="${item.salePrice}" step="0.01" onchange="updateItemField(${i},'salePrice',+this.value)"></td>
-                </tr>`;
-            }
-            return `<tr>
-                <td>${item.productName}</td>
-                <td>${item.description || '—'}</td>
-                <td>${item.quantity}</td>
-                <td class="text-right">${fmtBRL(item.totalCost)}</td>
+        const itemsRows = items.map((item, i) => editMode ? `<tr>
+                <td style="color:var(--text-primary)">${esc(item.productName)}</td>
+                <td style="color:var(--text-secondary)">${esc(item.description) || '—'}</td>
+                <td><input type="number" class="form-input" style="width:75px;padding:4px 6px;" value="${item.quantity}" min="1"
+                    onchange="updateItemField(${i},'quantity',+this.value)"></td>
+                <td class="text-right" style="color:var(--text-secondary)">${fmtBRL(item.totalCost)}</td>
+                <td class="text-right"><input type="number" class="form-input" style="width:100px;padding:4px 6px;" value="${item.salePrice}" step="0.01"
+                    onchange="updateItemField(${i},'salePrice',+this.value)"></td>
+            </tr>` : `<tr>
+                <td style="color:var(--text-primary)">${esc(item.productName)}</td>
+                <td style="color:var(--text-secondary)">${esc(item.description) || '—'}</td>
+                <td style="color:var(--text-secondary)">${item.quantity}</td>
+                <td class="text-right" style="color:var(--text-secondary)">${fmtBRL(item.totalCost)}</td>
                 <td class="text-right detail-total">${fmtBRL(item.salePrice)}</td>
-            </tr>`;
-        }).join('');
+            </tr>`).join('');
 
         return `
         <div class="budget-detail-section">
-            <h4>📋 Dados — #${b.budgetCode} · ${fmtDate(b.savedAt || b.date)}</h4>
-            ${clientFields}
-            ${statusField}
+            <h4>📋 Dados — #${b.budgetCode || '—'} · ${fmtDate(b.savedAt || b.date)}</h4>
+            ${clientSection}
         </div>
         <div class="budget-detail-section">
             <h4>🛒 Itens</h4>
@@ -458,66 +526,70 @@
                     <th>Produto</th><th>Descrição</th><th>Qtd</th>
                     <th class="text-right">Custo</th><th class="text-right">Venda</th>
                 </tr></thead>
-                <tbody>${itemsRows}</tbody>
+                <tbody id="detail-tbody">${itemsRows}</tbody>
                 <tfoot><tr style="font-weight:700;">
-                    <td colspan="3">Total</td>
-                    <td class="text-right">${fmtBRL(custo)}</td>
-                    <td class="text-right detail-total">${fmtBRL(venda)}</td>
+                    <td colspan="3" style="color:var(--text-primary)">Total</td>
+                    <td class="text-right" id="modal-total-custo" style="color:var(--text-secondary)">${fmtBRL(custo)}</td>
+                    <td class="text-right detail-total" id="modal-total-venda">${fmtBRL(venda)}</td>
                 </tr></tfoot>
             </table>
         </div>`;
     }
 
-    /* ── Edição inline de itens no modal ── */
-    window.updateItemField = function(itemIndex, field, value) {
+    function esc(s) {
+        return (s || '').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    /* ── Edição de itens no modal ── */
+    window.updateItemField = function(idx, field, value) {
         const b = allBudgets.find(x => x.id === editingId);
-        if (!b || !b.items[itemIndex]) return;
-        b.items[itemIndex][field] = value;
-        // Atualiza totais no rodapé
-        const venda = totalVenda(b);
-        const custo = totalCusto(b);
-        const tfoot = document.querySelector('.detail-table tfoot td:last-child');
-        const tfootCusto = document.querySelector('.detail-table tfoot td:nth-child(4)');
-        if (tfoot) tfoot.textContent = fmtBRL(venda);
-        if (tfootCusto) tfootCusto.textContent = fmtBRL(custo);
+        if (!b || !b.items[idx]) return;
+        b.items[idx][field] = value;
+        const el = document.getElementById('modal-total-venda');
+        const el2 = document.getElementById('modal-total-custo');
+        if (el)  el.textContent  = fmtBRL(totalVenda(b));
+        if (el2) el2.textContent = fmtBRL(totalCusto(b));
     };
 
     /* ── Salvar edição ── */
     document.getElementById('btn-modal-save').addEventListener('click', async () => {
         const b = allBudgets.find(x => x.id === editingId);
         if (!b) return;
-
-        // Coleta campos do cliente
-        const nameEl  = document.getElementById('edit-client-name');
-        const cnpjEl  = document.getElementById('edit-client-cnpj');
-        const phoneEl = document.getElementById('edit-client-phone');
-        const emailEl = document.getElementById('edit-client-email');
+        const v = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+        b.clientName  = v('edit-client-name');
+        b.clientCnpj  = v('edit-client-cnpj');
+        b.clientPhone = v('edit-client-phone');
+        b.clientEmail = v('edit-client-email');
         const statEl  = document.getElementById('edit-status');
-
-        if (nameEl)  b.clientName  = nameEl.value.trim();
-        if (cnpjEl)  b.clientCnpj  = cnpjEl.value.trim();
-        if (phoneEl) b.clientPhone = phoneEl.value.trim();
-        if (emailEl) b.clientEmail = emailEl.value.trim();
-        if (statEl)  b.status      = statEl.value;
-
+        if (statEl) b.status = statEl.value;
         try {
             await fetch(apiUrl + '/api/budgets/' + encodeURIComponent(editingId), {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'PUT', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(b)
             });
             renderKPIs(allBudgets);
             renderTable();
             closeModal();
             showToast('Orçamento atualizado!');
-        } catch {
-            showToast('Erro ao salvar.', 'error');
-        }
+        } catch { showToast('Erro ao salvar.', 'error'); }
     });
 
-    /* ── Botão editar no modal (modo view → edit) ── */
+    /* ── Editar (view → edit) ── */
     document.getElementById('btn-modal-edit').addEventListener('click', () => {
         openModal(editingId, true);
+    });
+
+    /* ── Novo orçamento para o mesmo cliente ── */
+    document.getElementById('btn-modal-new-client').addEventListener('click', () => {
+        const b = allBudgets.find(x => x.id === editingId);
+        if (!b) return;
+        const params = new URLSearchParams({
+            clientName:  b.clientName  || '',
+            clientCnpj:  b.clientCnpj  || '',
+            clientPhone: b.clientPhone || '',
+            clientEmail: b.clientEmail || ''
+        });
+        window.location.href = 'index.html?' + params.toString();
     });
 
     /* ── Imprimir ── */
@@ -527,25 +599,84 @@
     function closeModal() {
         document.getElementById('modal-overlay').classList.add('hidden');
         editingId = null;
-        isEditMode = false;
     }
-    document.getElementById('modal-close').addEventListener('click', closeModal);
+    document.getElementById('modal-close').addEventListener('click',  closeModal);
     document.getElementById('modal-close2').addEventListener('click', closeModal);
     document.getElementById('modal-overlay').addEventListener('click', e => {
         if (e.target === document.getElementById('modal-overlay')) closeModal();
     });
 
     /* ── Filtros ── */
-    ['filter-search', 'filter-status', 'filter-from', 'filter-to'].forEach(id => {
-        document.getElementById(id).addEventListener('input', () => renderTable());
+    ['filter-search','filter-status','filter-from','filter-to'].forEach(id => {
+        document.getElementById(id).addEventListener('input', renderTable);
     });
     document.getElementById('btn-clear-filters').addEventListener('click', () => {
-        document.getElementById('filter-search').value = '';
-        document.getElementById('filter-status').value = '';
-        document.getElementById('filter-from').value   = '';
-        document.getElementById('filter-to').value     = '';
+        ['filter-search','filter-status','filter-from','filter-to'].forEach(id => {
+            document.getElementById(id).value = '';
+        });
         renderTable();
     });
+
+    /* ── Exportação ── */
+    window.exportData = function(format) {
+        const data = getFiltered();
+        if (data.length === 0) { showToast('Nenhum dado para exportar.', 'error'); return; }
+
+        if (format === 'csv' || format === 'excel') {
+            const sep = format === 'excel' ? '\t' : ',';
+            const q   = v => format === 'excel' ? (v || '') : `"${(v || '').toString().replace(/"/g,'""')}"`;
+            const header = ['Código','Data','Cliente','CNPJ','Telefone','Email','Itens','Valor Custo','Valor Venda','Status'];
+            const rows = data.map(b => [
+                b.budgetCode, fmtDate(b.savedAt || b.date),
+                b.clientName, b.clientCnpj, b.clientPhone, b.clientEmail,
+                (b.items||[]).length,
+                totalCusto(b).toFixed(2), totalVenda(b).toFixed(2),
+                b.status
+            ].map(q).join(sep));
+            const content = [header.map(q).join(sep), ...rows].join('\n');
+            const ext  = format === 'excel' ? 'xls' : 'csv';
+            const mime = format === 'excel' ? 'application/vnd.ms-excel' : 'text/csv';
+            download(content, `orcamentos.${ext}`, mime);
+
+        } else if (format === 'txt') {
+            const lines = data.map(b =>
+                `#${b.budgetCode} | ${fmtDate(b.savedAt||b.date)} | ${b.clientName||'—'} | ${fmtBRL(totalVenda(b))} | ${b.status}`
+            );
+            download(lines.join('\n'), 'orcamentos.txt', 'text/plain');
+
+        } else if (format === 'pdf') {
+            // Abre janela de impressão com tabela simplificada
+            const rows = data.map(b => `<tr>
+                <td>#${b.budgetCode||'—'}</td>
+                <td>${fmtDate(b.savedAt||b.date)}</td>
+                <td>${b.clientName||'—'}</td>
+                <td>${(b.items||[]).length}</td>
+                <td>R$ ${totalVenda(b).toFixed(2)}</td>
+                <td>${b.status}</td>
+            </tr>`).join('');
+            const win = window.open('', '_blank');
+            win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+                <title>Orçamentos Bee Like</title>
+                <style>body{font-family:sans-serif;font-size:12px;padding:20px}
+                h2{margin-bottom:12px}
+                table{width:100%;border-collapse:collapse}
+                th,td{border:1px solid #ccc;padding:6px 8px;text-align:left}
+                th{background:#f5f5f5}</style>
+                </head><body><h2>Orçamentos Bee Like — ${new Date().toLocaleDateString('pt-BR')}</h2>
+                <table><thead><tr><th>Código</th><th>Data</th><th>Cliente</th><th>Itens</th><th>Valor</th><th>Status</th></tr></thead>
+                <tbody>${rows}</tbody></table>
+                <script>window.onload=()=>{window.print();window.close()}<\/script></body></html>`);
+            win.document.close();
+        }
+    };
+
+    function download(content, filename, mime) {
+        const blob = new Blob(['\uFEFF' + content], { type: mime + ';charset=utf-8;' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href = url; a.download = filename; a.click();
+        URL.revokeObjectURL(url);
+    }
 
     /* ── Start ── */
     loadBudgets();
