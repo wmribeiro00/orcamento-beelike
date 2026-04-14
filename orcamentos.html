@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orçamentos · Bee Like</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐝</text></svg>">
+    <style>
+        /* ── Layout ── */
+        .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+        .page-title  { font-size:var(--text-xl); font-weight:700; color:var(--text-primary); }
+
+        /* ── KPIs ── */
+        .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:24px; }
+        .kpi-card { background:var(--surface); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:16px; }
+        .kpi-label { font-size:var(--text-xs); color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
+        .kpi-value { font-size:var(--text-2xl,1.5rem); font-weight:700; color:var(--text-primary); }
+        .kpi-sub   { font-size:var(--text-xs); color:var(--text-muted); margin-top:2px; }
+        .kpi-card.accent-green .kpi-value { color:#22c55e; }
+        .kpi-card.accent-amber .kpi-value { color:#f59e0b; }
+        .kpi-card.accent-red   .kpi-value { color:#ef4444; }
+
+        /* ── Filters ── */
+        .filters { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:flex-end; }
+        .filters .form-group { margin:0; min-width:160px; }
+        .filters .form-group label { font-size:var(--text-xs); color:var(--text-muted); display:block; margin-bottom:4px; }
+        .filter-search { flex:1; min-width:200px; }
+
+        /* ── Table ── */
+        .budget-table { width:100%; border-collapse:collapse; font-size:var(--text-sm); }
+        .budget-table th { text-align:left; padding:10px 12px; color:var(--text-muted); font-weight:600; font-size:var(--text-xs); text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid var(--border-subtle); white-space:nowrap; }
+        .budget-table td { padding:12px; border-bottom:1px solid var(--border-subtle); vertical-align:middle; }
+        .budget-table tr:last-child td { border-bottom:none; }
+        .budget-table tbody tr:hover { background:var(--surface-hover,rgba(255,255,255,.03)); }
+        .budget-table .col-code  { font-family:monospace; font-size:var(--text-xs); color:var(--text-muted); }
+        .budget-table .col-value { font-weight:600; color:var(--text-primary); }
+        .budget-table .col-actions { display:flex; gap:6px; }
+
+        /* ── Status badge ── */
+        .status-badge { display:inline-block; padding:2px 10px; border-radius:999px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+        .status-pendente { background:rgba(245,158,11,.15); color:#f59e0b; }
+        .status-aceito   { background:rgba(34,197,94,.15);  color:#22c55e; }
+        .status-recusado { background:rgba(239,68,68,.15);  color:#ef4444; }
+
+        /* ── Modal ── */
+        .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1000; display:flex; align-items:center; justify-content:center; padding:16px; }
+        .modal-overlay.hidden { display:none; }
+        .modal { background:var(--surface); border:1px solid var(--border-subtle); border-radius:var(--radius-xl,16px); width:100%; max-width:720px; max-height:90vh; overflow-y:auto; }
+        .modal-header { display:flex; align-items:center; justify-content:space-between; padding:20px 24px 16px; border-bottom:1px solid var(--border-subtle); }
+        .modal-header h3 { font-size:var(--text-lg); font-weight:700; margin:0; }
+        .modal-body   { padding:24px; }
+        .modal-footer { padding:16px 24px; border-top:1px solid var(--border-subtle); display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; }
+        .btn-close { background:none; border:none; font-size:20px; cursor:pointer; color:var(--text-muted); line-height:1; padding:4px; }
+
+        /* ── Print budget detail ── */
+        .budget-detail-header { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
+        .budget-detail-section { margin-bottom:16px; }
+        .budget-detail-section h4 { font-size:var(--text-xs); text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); margin-bottom:8px; }
+        .detail-table { width:100%; border-collapse:collapse; font-size:var(--text-sm); }
+        .detail-table th { text-align:left; padding:8px 10px; background:var(--surface-alt,rgba(255,255,255,.04)); font-size:var(--text-xs); color:var(--text-muted); }
+        .detail-table td { padding:8px 10px; border-top:1px solid var(--border-subtle); }
+        .detail-table .text-right { text-align:right; }
+        .detail-total { font-weight:700; color:var(--accent,#f5a623); }
+
+        /* ── Empty state ── */
+        .empty-state { text-align:center; padding:60px 20px; color:var(--text-muted); }
+        .empty-state .empty-icon { font-size:48px; margin-bottom:12px; }
+
+        /* ── Status select inline ── */
+        .status-select { font-size:12px; border:1px solid var(--border-subtle); border-radius:6px; padding:2px 6px; background:var(--surface); color:var(--text-primary); cursor:pointer; }
+
+        @media print {
+            .no-print { display:none !important; }
+            .modal-overlay { position:static; background:none; padding:0; }
+            .modal { border:none; max-height:none; }
+            .modal-header, .modal-footer { display:none; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+
+    <!-- HEADER -->
+    <header class="app-header no-print">
+        <div class="app-logo">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L3 7v10l9 5 9-5V7l-9-5zm0 2.18L18.39 7.5 12 10.82 5.61 7.5 12 4.18zM5 9.06l6 3.32v6.44l-6-3.32V9.06zm8 9.76V12.38l6-3.32v6.44l-6 3.32z"/>
+                </svg>
+            </div>
+            <div class="logo-text">
+                <span class="logo-brand">Bee Like</span>
+                <span class="logo-sub">Orçamentos</span>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="index.html" class="btn btn-ghost">← Novo Orçamento</a>
+            <a href="config.html" class="btn btn-ghost">⚙ Configurações</a>
+        </div>
+    </header>
+
+    <main>
+
+        <!-- KPIs -->
+        <div class="kpi-grid no-print" id="kpi-grid">
+            <div class="kpi-card"><div class="kpi-label">Total de Orçamentos</div><div class="kpi-value" id="kpi-total">—</div></div>
+            <div class="kpi-card accent-green"><div class="kpi-label">Aceitos</div><div class="kpi-value" id="kpi-aceitos">—</div><div class="kpi-sub" id="kpi-conv">conversão —</div></div>
+            <div class="kpi-card accent-amber"><div class="kpi-label">Pendentes</div><div class="kpi-value" id="kpi-pendentes">—</div></div>
+            <div class="kpi-card accent-red"><div class="kpi-label">Recusados</div><div class="kpi-value" id="kpi-recusados">—</div></div>
+            <div class="kpi-card"><div class="kpi-label">Valor Total (venda)</div><div class="kpi-value" id="kpi-valor">—</div></div>
+            <div class="kpi-card accent-green"><div class="kpi-label">Valor Aceitos</div><div class="kpi-value" id="kpi-valor-aceito">—</div></div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="card animate-fade-in no-print" style="margin-bottom:16px;">
+            <div class="filters">
+                <div class="form-group filter-search">
+                    <label>Buscar</label>
+                    <input type="text" class="form-input" id="filter-search" placeholder="Código, cliente, e-mail...">
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select class="form-input" id="filter-status">
+                        <option value="">Todos</option>
+                        <option value="pendente">Pendente</option>
+                        <option value="aceito">Aceito</option>
+                        <option value="recusado">Recusado</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>De</label>
+                    <input type="date" class="form-input" id="filter-from">
+                </div>
+                <div class="form-group">
+                    <label>Até</label>
+                    <input type="date" class="form-input" id="filter-to">
+                </div>
+                <div class="form-group" style="align-self:flex-end;">
+                    <button class="btn btn-ghost" id="btn-clear-filters">✕ Limpar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="card animate-fade-in">
+            <div id="budget-list-wrapper">
+                <div class="empty-state" id="loading-state">
+                    <div class="empty-icon">⏳</div>
+                    <p>Carregando orçamentos...</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+    <div style="height:64px;"></div>
+</div>
+
+<!-- MODAL VISUALIZAR/EDITAR -->
+<div class="modal-overlay hidden no-print" id="modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="modal-title">Orçamento</h3>
+            <button class="btn-close" id="modal-close">✕</button>
+        </div>
+        <div class="modal-body" id="modal-body"></div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" id="modal-close2">Fechar</button>
+            <button class="btn btn-ghost no-print" id="btn-modal-print">🖨 Imprimir</button>
+            <button class="btn btn-secondary no-print" id="btn-modal-edit">✏️ Editar</button>
+            <button class="btn btn-primary no-print" id="btn-modal-save" style="display:none;">💾 Salvar Alterações</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+    <span class="toast-icon">✅</span>
+    <span class="toast-text" id="toast-text"></span>
+</div>
+
+<script src="js/storage.js"></script>
+<script>
+(function () {
+    'use strict';
+
+    const config  = Storage.getConfig();
+    const apiUrl  = config.apiUrl || '';
+
+    let allBudgets   = [];
+    let editingId    = null;
+    let isEditMode   = false;
+
+    /* ── Formatação ── */
+    const fmtBRL = v => 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmtDate = s => {
+        if (!s) return '—';
+        // tenta ISO
+        const d = new Date(s);
+        if (!isNaN(d)) return d.toLocaleDateString('pt-BR');
+        return s.split(',')[0] || s;
+    };
+
+    /* ── Toast ── */
+    function showToast(msg, type = 'success') {
+        const t = document.getElementById('toast');
+        document.getElementById('toast-text').textContent = msg;
+        t.className = 'toast ' + type;
+        t.querySelector('.toast-icon').textContent = type === 'success' ? '✅' : '⚠️';
+        void t.offsetWidth;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    /* ── Carregar orçamentos ── */
+    async function loadBudgets() {
+        if (!apiUrl) {
+            document.getElementById('budget-list-wrapper').innerHTML =
+                '<div class="empty-state"><div class="empty-icon">⚙️</div><p>Configure a URL da API em <a href="config.html">Configurações</a>.</p></div>';
+            return;
+        }
+        try {
+            const r = await fetch(apiUrl + '/api/budgets');
+            const data = await r.json();
+            // Garante que orçamentos antigos (sem id/status) ficam compatíveis
+            allBudgets = (data.budgets || []).map((b, i) => ({
+                ...b,
+                id:     b.id     || ('b_legacy_' + i),
+                status: b.status || 'pendente'
+            })).reverse(); // mais recentes primeiro
+            renderKPIs(allBudgets);
+            renderTable(allBudgets);
+        } catch (e) {
+            document.getElementById('budget-list-wrapper').innerHTML =
+                '<div class="empty-state"><div class="empty-icon">❌</div><p>Erro ao carregar orçamentos. Verifique a conexão com o servidor.</p></div>';
+        }
+    }
+
+    /* ── KPIs ── */
+    function renderKPIs(budgets) {
+        const total     = budgets.length;
+        const aceitos   = budgets.filter(b => b.status === 'aceito');
+        const pendentes = budgets.filter(b => b.status === 'pendente').length;
+        const recusados = budgets.filter(b => b.status === 'recusado').length;
+        const valorTotal  = budgets.reduce((s, b) => s + totalVenda(b), 0);
+        const valorAceito = aceitos.reduce((s, b) => s + totalVenda(b), 0);
+        const conv = total > 0 ? Math.round(aceitos.length / total * 100) : 0;
+
+        document.getElementById('kpi-total').textContent      = total;
+        document.getElementById('kpi-aceitos').textContent    = aceitos.length;
+        document.getElementById('kpi-conv').textContent       = `conversão ${conv}%`;
+        document.getElementById('kpi-pendentes').textContent  = pendentes;
+        document.getElementById('kpi-recusados').textContent  = recusados;
+        document.getElementById('kpi-valor').textContent      = fmtBRL(valorTotal);
+        document.getElementById('kpi-valor-aceito').textContent = fmtBRL(valorAceito);
+    }
+
+    function totalVenda(b) {
+        return (b.items || []).reduce((s, i) => s + (i.salePrice || 0), 0);
+    }
+    function totalCusto(b) {
+        return (b.items || []).reduce((s, i) => s + (i.totalCost || 0), 0);
+    }
+
+    /* ── Tabela ── */
+    function getFiltered() {
+        const search = document.getElementById('filter-search').value.trim().toLowerCase();
+        const status = document.getElementById('filter-status').value;
+        const from   = document.getElementById('filter-from').value;
+        const to     = document.getElementById('filter-to').value;
+
+        return allBudgets.filter(b => {
+            if (status && b.status !== status) return false;
+            if (from || to) {
+                const d = new Date(b.savedAt || b.date);
+                if (from && d < new Date(from)) return false;
+                if (to   && d > new Date(to + 'T23:59:59')) return false;
+            }
+            if (search) {
+                const hay = [b.budgetCode, b.clientName, b.clientCnpj, b.clientEmail].join(' ').toLowerCase();
+                if (!hay.includes(search)) return false;
+            }
+            return true;
+        });
+    }
+
+    function renderTable(budgets) {
+        const filtered = budgets ? getFiltered() : getFiltered();
+        const wrapper  = document.getElementById('budget-list-wrapper');
+
+        if (filtered.length === 0) {
+            wrapper.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>Nenhum orçamento encontrado.</p></div>';
+            return;
+        }
+
+        wrapper.innerHTML = `
+        <div style="overflow-x:auto;">
+        <table class="budget-table">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Data</th>
+                    <th>Cliente</th>
+                    <th>Itens</th>
+                    <th>Valor Venda</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${filtered.map(b => `
+                <tr>
+                    <td class="col-code">#${b.budgetCode || '—'}</td>
+                    <td>${fmtDate(b.savedAt || b.date)}</td>
+                    <td>
+                        <div style="font-weight:600;">${b.clientName || '—'}</div>
+                        ${b.clientEmail ? `<div style="font-size:11px;color:var(--text-muted)">${b.clientEmail}</div>` : ''}
+                    </td>
+                    <td>${(b.items || []).length} item(s)</td>
+                    <td class="col-value">${fmtBRL(totalVenda(b))}</td>
+                    <td>
+                        <select class="status-select" data-id="${b.id}" onchange="updateStatus('${b.id}', this.value)">
+                            <option value="pendente" ${b.status==='pendente'?'selected':''}>⏳ Pendente</option>
+                            <option value="aceito"   ${b.status==='aceito'  ?'selected':''}>✅ Aceito</option>
+                            <option value="recusado" ${b.status==='recusado'?'selected':''}>❌ Recusado</option>
+                        </select>
+                    </td>
+                    <td>
+                        <div class="col-actions">
+                            <button class="btn btn-ghost btn-icon" title="Visualizar" onclick="openModal('${b.id}', false)">👁</button>
+                            <button class="btn btn-ghost btn-icon" title="Editar"     onclick="openModal('${b.id}', true)">✏️</button>
+                            <button class="btn btn-ghost btn-icon" title="Excluir" style="color:#ef4444" onclick="deleteBudget('${b.id}')">🗑️</button>
+                        </div>
+                    </td>
+                </tr>`).join('')}
+            </tbody>
+        </table>
+        </div>`;
+    }
+
+    /* ── Atualizar status inline ── */
+    window.updateStatus = async function(id, status) {
+        const b = allBudgets.find(x => x.id === id);
+        if (!b) return;
+        b.status = status;
+        try {
+            await fetch(apiUrl + '/api/budgets/' + encodeURIComponent(id), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+            renderKPIs(allBudgets);
+            showToast('Status atualizado!');
+        } catch {
+            showToast('Erro ao atualizar status.', 'error');
+        }
+    };
+
+    /* ── Excluir ── */
+    window.deleteBudget = async function(id) {
+        const b = allBudgets.find(x => x.id === id);
+        if (!b) return;
+        if (!confirm(`Excluir orçamento #${b.budgetCode}? Esta ação não pode ser desfeita.`)) return;
+        try {
+            await fetch(apiUrl + '/api/budgets/' + encodeURIComponent(id), { method: 'DELETE' });
+            allBudgets = allBudgets.filter(x => x.id !== id);
+            renderKPIs(allBudgets);
+            renderTable();
+            showToast('Orçamento excluído.');
+        } catch {
+            showToast('Erro ao excluir.', 'error');
+        }
+    };
+
+    /* ── Modal ── */
+    window.openModal = function(id, editMode) {
+        const b = allBudgets.find(x => x.id === id);
+        if (!b) return;
+        editingId   = id;
+        isEditMode  = editMode;
+
+        document.getElementById('modal-title').textContent =
+            `Orçamento #${b.budgetCode || '—'} ${editMode ? '— Edição' : ''}`;
+        document.getElementById('modal-body').innerHTML = renderModalBody(b, editMode);
+        document.getElementById('btn-modal-edit').style.display  = editMode ? 'none' : '';
+        document.getElementById('btn-modal-save').style.display  = editMode ? ''     : 'none';
+        document.getElementById('modal-overlay').classList.remove('hidden');
+    };
+
+    function renderModalBody(b, editMode) {
+        const statusLabel = { pendente: '⏳ Pendente', aceito: '✅ Aceito', recusado: '❌ Recusado' };
+        const items = b.items || [];
+        const venda = totalVenda(b);
+        const custo = totalCusto(b);
+
+        const clientFields = editMode ? `
+            <div class="form-row">
+                <div class="form-group"><label class="form-label">Nome</label>
+                    <input class="form-input" id="edit-client-name"  value="${b.clientName  || ''}"></div>
+                <div class="form-group"><label class="form-label">CNPJ</label>
+                    <input class="form-input" id="edit-client-cnpj"  value="${b.clientCnpj  || ''}"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label class="form-label">Telefone</label>
+                    <input class="form-input" id="edit-client-phone" value="${b.clientPhone || ''}"></div>
+                <div class="form-group"><label class="form-label">E-mail</label>
+                    <input class="form-input" id="edit-client-email" value="${b.clientEmail || ''}"></div>
+            </div>` : `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:var(--text-sm);">
+                <div><span style="color:var(--text-muted)">Cliente:</span> <strong>${b.clientName || '—'}</strong></div>
+                <div><span style="color:var(--text-muted)">CNPJ:</span> ${b.clientCnpj || '—'}</div>
+                <div><span style="color:var(--text-muted)">Telefone:</span> ${b.clientPhone || '—'}</div>
+                <div><span style="color:var(--text-muted)">E-mail:</span> ${b.clientEmail || '—'}</div>
+            </div>`;
+
+        const statusField = editMode ? `
+            <div class="form-group" style="margin-top:12px;">
+                <label class="form-label">Status</label>
+                <select class="form-input" id="edit-status">
+                    <option value="pendente" ${b.status==='pendente'?'selected':''}>⏳ Pendente</option>
+                    <option value="aceito"   ${b.status==='aceito'  ?'selected':''}>✅ Aceito</option>
+                    <option value="recusado" ${b.status==='recusado'?'selected':''}>❌ Recusado</option>
+                </select>
+            </div>` : `<div style="margin-top:8px;font-size:var(--text-sm);">
+                <span style="color:var(--text-muted)">Status:</span>
+                <span class="status-badge status-${b.status}">${statusLabel[b.status] || b.status}</span>
+            </div>`;
+
+        const itemsRows = items.map((item, i) => {
+            if (editMode) {
+                return `<tr>
+                    <td>${item.productName}</td>
+                    <td>${item.description || '—'}</td>
+                    <td><input type="number" class="form-input" style="width:80px;padding:4px 8px;" data-item="${i}" data-field="quantity" value="${item.quantity}" min="1" onchange="updateItemField(${i},'quantity',+this.value)"></td>
+                    <td class="text-right">${fmtBRL(item.totalCost)}</td>
+                    <td class="text-right"><input type="number" class="form-input" style="width:100px;padding:4px 8px;" data-item="${i}" data-field="salePrice" value="${item.salePrice}" step="0.01" onchange="updateItemField(${i},'salePrice',+this.value)"></td>
+                </tr>`;
+            }
+            return `<tr>
+                <td>${item.productName}</td>
+                <td>${item.description || '—'}</td>
+                <td>${item.quantity}</td>
+                <td class="text-right">${fmtBRL(item.totalCost)}</td>
+                <td class="text-right detail-total">${fmtBRL(item.salePrice)}</td>
+            </tr>`;
+        }).join('');
+
+        return `
+        <div class="budget-detail-section">
+            <h4>📋 Dados — #${b.budgetCode} · ${fmtDate(b.savedAt || b.date)}</h4>
+            ${clientFields}
+            ${statusField}
+        </div>
+        <div class="budget-detail-section">
+            <h4>🛒 Itens</h4>
+            <table class="detail-table">
+                <thead><tr>
+                    <th>Produto</th><th>Descrição</th><th>Qtd</th>
+                    <th class="text-right">Custo</th><th class="text-right">Venda</th>
+                </tr></thead>
+                <tbody>${itemsRows}</tbody>
+                <tfoot><tr style="font-weight:700;">
+                    <td colspan="3">Total</td>
+                    <td class="text-right">${fmtBRL(custo)}</td>
+                    <td class="text-right detail-total">${fmtBRL(venda)}</td>
+                </tr></tfoot>
+            </table>
+        </div>`;
+    }
+
+    /* ── Edição inline de itens no modal ── */
+    window.updateItemField = function(itemIndex, field, value) {
+        const b = allBudgets.find(x => x.id === editingId);
+        if (!b || !b.items[itemIndex]) return;
+        b.items[itemIndex][field] = value;
+        // Atualiza totais no rodapé
+        const venda = totalVenda(b);
+        const custo = totalCusto(b);
+        const tfoot = document.querySelector('.detail-table tfoot td:last-child');
+        const tfootCusto = document.querySelector('.detail-table tfoot td:nth-child(4)');
+        if (tfoot) tfoot.textContent = fmtBRL(venda);
+        if (tfootCusto) tfootCusto.textContent = fmtBRL(custo);
+    };
+
+    /* ── Salvar edição ── */
+    document.getElementById('btn-modal-save').addEventListener('click', async () => {
+        const b = allBudgets.find(x => x.id === editingId);
+        if (!b) return;
+
+        // Coleta campos do cliente
+        const nameEl  = document.getElementById('edit-client-name');
+        const cnpjEl  = document.getElementById('edit-client-cnpj');
+        const phoneEl = document.getElementById('edit-client-phone');
+        const emailEl = document.getElementById('edit-client-email');
+        const statEl  = document.getElementById('edit-status');
+
+        if (nameEl)  b.clientName  = nameEl.value.trim();
+        if (cnpjEl)  b.clientCnpj  = cnpjEl.value.trim();
+        if (phoneEl) b.clientPhone = phoneEl.value.trim();
+        if (emailEl) b.clientEmail = emailEl.value.trim();
+        if (statEl)  b.status      = statEl.value;
+
+        try {
+            await fetch(apiUrl + '/api/budgets/' + encodeURIComponent(editingId), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(b)
+            });
+            renderKPIs(allBudgets);
+            renderTable();
+            closeModal();
+            showToast('Orçamento atualizado!');
+        } catch {
+            showToast('Erro ao salvar.', 'error');
+        }
+    });
+
+    /* ── Botão editar no modal (modo view → edit) ── */
+    document.getElementById('btn-modal-edit').addEventListener('click', () => {
+        openModal(editingId, true);
+    });
+
+    /* ── Imprimir ── */
+    document.getElementById('btn-modal-print').addEventListener('click', () => window.print());
+
+    /* ── Fechar modal ── */
+    function closeModal() {
+        document.getElementById('modal-overlay').classList.add('hidden');
+        editingId = null;
+        isEditMode = false;
+    }
+    document.getElementById('modal-close').addEventListener('click', closeModal);
+    document.getElementById('modal-close2').addEventListener('click', closeModal);
+    document.getElementById('modal-overlay').addEventListener('click', e => {
+        if (e.target === document.getElementById('modal-overlay')) closeModal();
+    });
+
+    /* ── Filtros ── */
+    ['filter-search', 'filter-status', 'filter-from', 'filter-to'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => renderTable());
+    });
+    document.getElementById('btn-clear-filters').addEventListener('click', () => {
+        document.getElementById('filter-search').value = '';
+        document.getElementById('filter-status').value = '';
+        document.getElementById('filter-from').value   = '';
+        document.getElementById('filter-to').value     = '';
+        renderTable();
+    });
+
+    /* ── Start ── */
+    loadBudgets();
+})();
+</script>
+</body>
+</html>

@@ -75,11 +75,41 @@ app.delete('/api/products/:id', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+// GET /api/budgets — lista todos os orçamentos
+app.get('/api/budgets', (req, res) => {
+  const budgets = readJson(FILES.budgets, []);
+  res.json({ status: 'ok', budgets });
+});
+
 // POST /api/budgets — salva um orçamento no histórico
 app.post('/api/budgets', (req, res) => {
   const budgets = readJson(FILES.budgets, []);
-  budgets.push({ ...req.body, savedAt: new Date().toISOString() });
+  const budget = {
+    ...req.body,
+    id: req.body.id || ('b_' + Date.now()),
+    status: req.body.status || 'pendente',
+    savedAt: req.body.savedAt || new Date().toISOString()
+  };
+  budgets.push(budget);
   writeJson(FILES.budgets, budgets);
+  res.json({ status: 'ok', id: budget.id });
+});
+
+// PUT /api/budgets/:id — atualiza um orçamento (edição ou status)
+app.put('/api/budgets/:id', (req, res) => {
+  const budgets = readJson(FILES.budgets, []);
+  const idx = budgets.findIndex(b => b.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ status: 'error', message: 'Orçamento não encontrado' });
+  budgets[idx] = { ...budgets[idx], ...req.body, id: req.params.id, updatedAt: new Date().toISOString() };
+  writeJson(FILES.budgets, budgets);
+  res.json({ status: 'ok' });
+});
+
+// DELETE /api/budgets/:id — remove um orçamento
+app.delete('/api/budgets/:id', (req, res) => {
+  const budgets = readJson(FILES.budgets, []);
+  const filtered = budgets.filter(b => b.id !== req.params.id);
+  writeJson(FILES.budgets, filtered);
   res.json({ status: 'ok' });
 });
 
