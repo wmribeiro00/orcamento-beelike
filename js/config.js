@@ -66,6 +66,9 @@
                         }
                         if (result.products && Object.keys(result.products).length > 0) {
                             config.products = result.products;
+                        } else if (result.config && result.config.products && Object.keys(result.config.products).length > 0) {
+                            // fallback: produtos salvos dentro do config.json (formato legado)
+                            config.products = result.config.products;
                         }
                         Storage.saveConfig(config);
                     }
@@ -378,11 +381,16 @@
             if (config.apiUrl) {
                 const url = config.apiUrl;
 
-                // 1. Salva config geral (empresa, URL da API)
+                // 1. Salva config geral (empresa, URL da API) — sem products para não misturar
+                const configToSave = {
+                    companyInfo:     config.companyInfo,
+                    apiUrl:          config.apiUrl,
+                    activeProductId: config.activeProductId
+                };
                 fetch(url + '/api/config', {
                     method:  'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body:    JSON.stringify({ config })
+                    body:    JSON.stringify({ config: configToSave })
                 })
                 .then(() => showToast('Configurações e produtos salvos no servidor!', 'success'))
                 .catch(() => showToast('⚠️ Erro ao conectar com o servidor. Dados salvos localmente.', 'error'));

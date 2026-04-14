@@ -135,9 +135,15 @@
         fetch(apiUrl + '/api/data')
             .then(function(r) { return r.json(); })
             .then(function(result) {
-                if (result.status === 'ok' && result.products && Object.keys(result.products).length > 0) {
-                    config.products = result.products;
-                    Storage.saveConfig(config);
+                if (result.status === 'ok') {
+                    if (result.products && Object.keys(result.products).length > 0) {
+                        config.products = result.products;
+                        Storage.saveConfig(config);
+                    } else if (result.config && result.config.products && Object.keys(result.config.products).length > 0) {
+                        // fallback: produtos salvos dentro do config.json (formato legado)
+                        config.products = result.config.products;
+                        Storage.saveConfig(config);
+                    }
                 }
                 onDone();
             })
