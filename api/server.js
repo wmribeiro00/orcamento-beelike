@@ -25,6 +25,21 @@ const FILES = {
 // Garante que a pasta data existe
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
+// Migração: adiciona id e status nos orçamentos antigos que não têm
+function migrateBudgets() {
+  try {
+    if (!fs.existsSync(FILES.budgets)) return;
+    const budgets = JSON.parse(fs.readFileSync(FILES.budgets, 'utf8'));
+    let changed = false;
+    budgets.forEach((b, i) => {
+      if (!b.id)     { b.id     = 'b_' + (b.budgetCode || i) + '_' + i; changed = true; }
+      if (!b.status) { b.status = 'pendente'; changed = true; }
+    });
+    if (changed) fs.writeFileSync(FILES.budgets, JSON.stringify(budgets, null, 2), 'utf8');
+  } catch {}
+}
+migrateBudgets();
+
 /* ---------- Utilitários ---------- */
 function readJson(file, fallback) {
   try {
