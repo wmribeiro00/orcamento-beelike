@@ -294,6 +294,7 @@
             .replace(/[^a-z0-9]/g, '_')
             .replace(/_+/g, '_')
             .replace(/^_|_$/g, '') || 'produto';
+        if (!config.products) config.products = {};
         const id = config.products[baseId] ? baseId + '_' + Date.now() : baseId;
 
         const markupTiers = buildMarkupTiers();
