@@ -836,10 +836,7 @@
             return;
         }
 
-        const budgetCode = Storage.getNextBudgetCode();
-
         const payload = {
-            budgetCode:  budgetCode,
             date:        new Date().toLocaleString('pt-BR'),
             clientCnpj:  els.clientCnpj.value.trim()  || '—',
             clientName:  els.clientName.value.trim()  || '—',
@@ -863,7 +860,8 @@
             body:    JSON.stringify(payload)
         })
         .then(r => r.json())
-        .then(() => {
+        .then(data => {
+            const budgetCode = data.budgetCode;
             els.budgetCode.textContent = budgetCode;
             els.budgetCodeWrapper.classList.remove('hidden');
             showToast('Orçamento salvo! Código: ' + budgetCode, 'success');

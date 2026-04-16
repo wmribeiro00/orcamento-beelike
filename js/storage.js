@@ -6,8 +6,6 @@
 const Storage = (function () {
     const CONFIG_KEY = 'beelike_config';
     const BUDGET_KEY = 'beelike_budget';
-    const BUDGET_CODE_KEY = 'beelike_budget_code';
-
     const PAPER_TYPES = [
         'Acetato Transparente',
         'Filme UV DTF',
@@ -159,15 +157,6 @@ const Storage = (function () {
         localStorage.removeItem(BUDGET_KEY);
     }
 
-    /* ---------- Budget Code (sequential) ---------- */
-
-    function getNextBudgetCode() {
-        var last = parseInt(localStorage.getItem(BUDGET_CODE_KEY) || '0', 10);
-        var next = last + 1;
-        localStorage.setItem(BUDGET_CODE_KEY, String(next));
-        return String(next).padStart(8, '0');
-    }
-
     /* ---------- Public API ---------- */
 
     return {
@@ -182,7 +171,6 @@ const Storage = (function () {
         addBudgetItem,
         removeBudgetItem,
         clearBudget,
-        getNextBudgetCode,
         isLocalStorageAvailable
     };
 })();

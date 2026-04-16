@@ -21,6 +21,7 @@ const FILES = {
   products: path.join(DATA_DIR, 'products.json'),
   budgets:  path.join(DATA_DIR, 'budgets.json'),
 };
+const SEQ_FILE = path.join(DATA_DIR, 'budget_sequence.json');
 
 // Garante que a pasta data existe
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -39,6 +40,27 @@ function migrateBudgets() {
   } catch {}
 }
 migrateBudgets();
+
+/* ---------- Sequência do código de orçamento ---------- */
+
+function initSequence() {
+  if (fs.existsSync(SEQ_FILE)) return;
+  const budgets = readJson(FILES.budgets, []);
+  const maxCode = budgets.reduce((max, b) => {
+    const n = parseInt(b.budgetCode || '0', 10);
+    return n > max ? n : max;
+  }, 0);
+  writeJson(SEQ_FILE, { last: maxCode });
+}
+
+function getNextBudgetCode() {
+  const seq  = readJson(SEQ_FILE, { last: 0 });
+  const next = seq.last + 1;
+  writeJson(SEQ_FILE, { last: next });
+  return String(next).padStart(8, '0');
+}
+
+initSequence();
 
 /* ---------- Utilitários ---------- */
 function readJson(file, fallback) {
@@ -98,16 +120,18 @@ app.get('/api/budgets', (req, res) => {
 
 // POST /api/budgets — salva um orçamento no histórico
 app.post('/api/budgets', (req, res) => {
-  const budgets = readJson(FILES.budgets, []);
+  const budgets    = readJson(FILES.budgets, []);
+  const budgetCode = getNextBudgetCode();
   const budget = {
     ...req.body,
-    id: req.body.id || ('b_' + Date.now()),
-    status: req.body.status || 'pendente',
+    budgetCode,
+    id:      req.body.id || ('b_' + Date.now()),
+    status:  req.body.status || 'pendente',
     savedAt: req.body.savedAt || new Date().toISOString()
   };
   budgets.push(budget);
   writeJson(FILES.budgets, budgets);
-  res.json({ status: 'ok', id: budget.id });
+  res.json({ status: 'ok', id: budget.id, budgetCode: budget.budgetCode });
 });
 
 // PUT /api/budgets/:id — atualiza um orçamento (edição ou status)
